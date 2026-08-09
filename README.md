@@ -27,4 +27,9 @@ The implementation of **route-map EIGRP** is to eliminate the WAN links in EIGRP
 **ABR R2 and R3 generate LSA 4 to advertise ASBR R5** to enable R6 in Area 1 to be able to learn routes in EIGRP 100
 
 **Reducing OSPF database size in production network**
-Area 2 (R5, R11, R12) is now configured as stub area which will filter LSA 4 and LSA 5
+Area 2 (R5, R11, R12) is configured as stub area which will filter LSA 4 and LSA 5. 
+R(config-router)area 2 stub. This takes out LSA 4 and 5 advertisements out of routing table and creates a default LSA 3 summary route via ABR R5.
+In Area 1 because it connects to adjoining external domain, configuring stub will stop LSA 5 advertisements necessary for propagation of EIGRP 200 external domain routes. Therefore, NSSA (Not-so-stubby area) is deployed to filter LSA 4 and 5 but allow LSA 7 for ASBR R7. For routers R2, R3, R6, R7 (config-router)area 1 nssa. Now on R7 it learns EIGRP routes from R8 as LSA 7 routes. However, after this implementation EIGRP 100 on R9 cannot be reached. Unlike stub area that generated a default route automatically, in the NSSA implementation a LSA 7 default route needs to injected into ABR R2 and R3 to enable R6 and R7 to learn routes in EIGRP 100. R2(config-router)# area 1 nssa default-information-originate or area 1 nssa translate type 7 always. whereas ASBR R4 generates LSA 5 it is forbidden in Area 1 so ABR R2 and R3 generate LSA 7 to translate LSA5 to enable R6 and R7 to learn of EIGRP 100. 
+**Internet routing:**
+Now to enable reachability to internet from all domains through R1 in backbone area a default route is injected from R1 into backbone area R1(config-router)default-information originate always
+On R1, NAT is implemented to allow traffic to ISP
